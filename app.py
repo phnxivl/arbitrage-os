@@ -23,17 +23,4 @@ st.markdown("""
 
 # --- ФУНКЦИЯ КУРСА ВАЛЮТ ---
 def get_exchange_rate(target_currency):
-    if target_currency == "USD": return 1.0
-    try:
-        # Используем бесплатное API для курсов
-        r = httpx.get("https://open.er-api.com/v6/latest/USD")
-        return r.json()['rates'].get(target_currency, 1.0)
-    except:
-        return 1.0
-
-# --- ШАПКА ---
-col_logo, col_stat = st.columns([1, 4])
-with col_logo:
-    st.markdown("# ⚡ OS")
-with col_stat:
-    st.markdown("### `СТАТУС СИСТЕМЫ: АКТИВНА` | `РЕЖИМ: АГРЕССИВНЫЙ Б
+    if target_currency == "USD": return
