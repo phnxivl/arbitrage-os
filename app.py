@@ -5,60 +5,52 @@ import io
 import random
 from PIL import Image, ImageOps
 
-# 1. Жесткая настройка
-st.set_page_config(page_title="ARBITRAGE OS v8.0", layout="centered")
+# 1. Настройка страницы (СТРОГО ПЕРВАЯ СТРОКА)
+st.set_page_config(page_title="ARBITRAGE OS v9.0", layout="wide")
 
-# 2. Дизайн
-st.markdown("<style>.stMetric { background-color: #1a1a1a; padding: 10px; border-radius: 10px; }</style>", unsafe_allow_html=True)
+# 2. Дизайн: Dark Mode и яркие метрики
+st.markdown("""
+    <style>
+    .stApp { background-color: #0E1117; color: white; }
+    [data-testid="stMetricValue"] { color: #39FF14 !important; }
+    .stButton>button { width: 100%; border-radius: 10px; background-color: #21262D; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
 
-st.title("🛰️ ARBITRAGE OS v8.0")
+# 3. Функция получения курса валют
+def get_rate(target_currency):
+    if target_currency == "USD": return 1.0
+    try:
+        # Прямой запрос курса без кэширования для надежности
+        r = httpx.get("https://open.er-api.com/v6/latest/USD", timeout=5)
+        return r.json()['rates'].get(target_currency, 1.0)
+    except:
+        return 1.0
 
-# 3. ТАБЫ
-tab_calc, tab_creo, tab_api = st.tabs(["📊 КАЛЬКУЛЯТОР", "🖼️ КРЕАТИВЫ", "💎 ОФФЕРЫ"])
+# --- ГЛАВНЫЙ ИНТЕРФЕЙС ---
+st.title("🛰️ ARBITRAGE OS: ПОЛНАЯ ВЕРСИЯ")
 
-# --- ВКЛАДКА КАЛЬКУЛЯТОРА ---
-with tab_calc:
-    st.header("Расчет прибыли")
-    payout = st.number_input("Выплата ($)", min_value=0.0, value=25.0, step=1.0, key="p1")
-    cr = st.number_input("CR лендинга (%)", min_value=0.0, value=2.0, step=0.1, key="c1")
-    approve = st.number_input("Аппрув (%)", min_value=0.0, value=40.0, step=1.0, key="a1")
+tabs = st.tabs(["📊 КАЛЬКУЛЯТОР", "🖼️ КРЕАТИВЫ", "💎 ОФФЕРЫ"])
+
+# --- ВКЛАДКА 1: КАЛЬКУЛЯТОР (С ВАЛЮТАМИ) ---
+with tabs[0]:
+    st.header("Юнит-экономика и Валюты")
     
-    cpc_usd = payout * (cr / 100) * (approve / 100)
+    col_input, col_res = st.columns([2, 1])
     
-    st.divider()
-    st.metric(label="МАКСИМАЛЬНЫЙ CPC ($)", value=f"${round(cpc_usd, 3)}")
-    st.metric(label="ДЛЯ ROI 100% ($)", value=f"${round(cpc_usd/2, 3)}")
-    st.info("Калькулятор активен")
-
-# --- ВКЛАДКА КРЕАТИВОВ ---
-with tab_creo:
-    st.header("Уникализатор")
-    file = st.file_uploader("Загрузи картинку", type=['jpg', 'png'])
-    if file:
-        img = Image.open(file)
-        if st.button("СДЕЛАТЬ КОПИЮ"):
-            out = img.rotate(random.randint(-2, 2))
-            out = ImageOps.mirror(out)
-            st.image(out, caption="Готовый крео", width=300)
-            buf = io.BytesIO()
-            out.save(buf, format="JPEG")
-            st.download_button("СКАЧАТЬ", buf.getvalue(), "unique.jpg")
-
-# --- ВКЛАДКА API (С ИСПРАВЛЕННЫМ ДВОЕТОЧИЕМ) ---
-with tab_api:
-    st.header("Leadbit")
-    token = st.text_input("Вставь токен", type="password")
-    if st.button("ПОКАЗАТЬ ВСЁ"):
-        if token:
-            try:
-                res = httpx.get(f"https://leadbit.com/api/offer/list?token={token}", timeout=10)
-                data_json = res.json().get('data', [])
-                if data_json:
-                    df = pd.DataFrame(data_json)
-                    st.write(df[['name', 'payout']].head(20))
-                else:
-                    st.warning("Офферов нет")
-            except:
-                st.error("Ошибка API или неверный токен")
-        else:
-            st.warning("Введите токен")
+    with col_input:
+        curr_list = ["USD", "RUB", "KZT", "UAH", "EUR"]
+        target_curr = st.selectbox("Валюта расчета", curr_list, key="c_sel")
+        
+        c1, c2, c3 = st.columns(3)
+        p_usd = c1.number_input("Выплата ($)", min_value=0.0, value=25.0, step=1.0)
+        cr = c2.number_input("CR ленда (%)", min_value=0.0, value=2.0, step=0.1)
+        ap = c3.number_input("Аппрув (%)", min_value=0.0, value=40.0, step=1.0)
+        
+    # Расчет курса
+    rate = get_rate(target_curr)
+    be_usd = p_usd * (cr / 100) * (ap / 100)
+    be_local = be_usd * rate
+    
+    with col_res:
+        st
