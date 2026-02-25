@@ -4,20 +4,23 @@ import httpx
 import io
 import random
 from PIL import Image
-from engine import hardcore_unique, calculate_be_cpc
+import engine  # Импортируем наш движок
 
-# 1. Настройки
-st.set_page_config(page_title="ARBITRAGE OS", layout="wide")
+# Конфигурация страницы
+st.set_page_config(page_title="ARBITRAGE OS v4.5", layout="wide", page_icon="⚡")
 
-# 2. Стиль
+# Кастомный дизайн (Dark Mode)
 st.markdown("""
     <style>
-    .stApp { background-color: #0E1117; color: white; }
-    [data-testid="stMetricValue"] { color: #39FF14 !important; }
+    .stApp { background-color: #0E1117; color: #E0E0E0; }
+    [data-testid="stMetricValue"] { color: #39FF14 !important; text-shadow: 0 0 10px rgba(57,255,20,0.3); }
+    .stTabs [data-baseweb="tab-list"] { gap: 24px; background-color: #161B22; padding: 10px; border-radius: 10px; }
+    .stButton>button { width: 100%; border-radius: 10px; background-color: #21262D; color: white; border: 1px solid #30363D; }
+    .stButton>button:hover { border-color: #58A6FF; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Функции
+# Функция курса валют
 def get_rate(curr):
     if curr == "USD": return 1.0
     try:
@@ -25,33 +28,6 @@ def get_rate(curr):
         return r.json()['rates'].get(curr, 1.0)
     except: return 1.0
 
-# 4. Интерфейс
-st.title("⚡ ARBITRAGE OS v4.5")
-tabs = st.tabs(["🚀 ОФФЕРЫ", "🎨 КРЕАТИВЫ", "📊 КАЛЬКУЛЯТОР"])
-
-with tabs[0]:
-    tkn = st.text_input("LEADBIT TOKEN", type="password")
-    geo = st.text_input("ГЕО", "KZ")
-    if st.button("ОБНОВИТЬ"):
-        if tkn:
-            try:
-                res = httpx.get(f"https://leadbit.com/api/offer/list?token={tkn}")
-                df = pd.DataFrame(res.json().get('data', []))
-                st.table(df[['name', 'payout', 'status']].head(10))
-            except: st.error("Ошибка API")
-
-with tabs[1]:
-    up = st.file_uploader("Загрузи фото", type=['jpg', 'png'])
-    if up:
-        img = Image.open(up)
-        if st.button("УНИКАЛИЗИРОВАТЬ"):
-            res_img = hardcore_unique(img)
-            st.image(res_img, width=400)
-            buf = io.BytesIO()
-            res_img.save(buf, format="JPEG")
-            st.download_button("СКАЧАТЬ", buf.getvalue(), "ready.jpg")
-
-with tabs[2]:
-    curr = st.selectbox("Валюта", ["USD", "RUB", "KZT", "UAH"])
-    rate = get_rate(curr)
-    c1, c2, c3 = st.columns(3)
+# Шапка
+st.markdown("# ⚡ ARBITRAGE COMMAND CENTER")
+st.markdown("`STATUS: ACTIVE` | `GEO: GLOBAL` | `CURRENCY: MULTI` ")
