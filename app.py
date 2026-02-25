@@ -5,7 +5,7 @@ import io
 import random
 from PIL import Image, ImageOps
 
-# 1. Жесткая настройка (всегда первая)
+# 1. Жесткая настройка
 st.set_page_config(page_title="ARBITRAGE OS v8.0", layout="centered")
 
 # 2. Дизайн
@@ -44,5 +44,21 @@ with tab_creo:
             out.save(buf, format="JPEG")
             st.download_button("СКАЧАТЬ", buf.getvalue(), "unique.jpg")
 
-# --- ВКЛАДКА API ---
-with tab_api
+# --- ВКЛАДКА API (С ИСПРАВЛЕННЫМ ДВОЕТОЧИЕМ) ---
+with tab_api:
+    st.header("Leadbit")
+    token = st.text_input("Вставь токен", type="password")
+    if st.button("ПОКАЗАТЬ ВСЁ"):
+        if token:
+            try:
+                res = httpx.get(f"https://leadbit.com/api/offer/list?token={token}", timeout=10)
+                data_json = res.json().get('data', [])
+                if data_json:
+                    df = pd.DataFrame(data_json)
+                    st.write(df[['name', 'payout']].head(20))
+                else:
+                    st.warning("Офферов нет")
+            except:
+                st.error("Ошибка API или неверный токен")
+        else:
+            st.warning("Введите токен")
