@@ -3,43 +3,45 @@ import pandas as pd
 import httpx
 import io
 import random
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageOps
 
-# 1. Настройки (СТРОГО ПЕРВЫМИ)
-st.set_page_config(page_title="ARBITRAGE OS PRO", layout="wide")
+# 1. Жесткая настройка (всегда первая)
+st.set_page_config(page_title="ARBITRAGE OS v8.0", layout="centered")
 
-# 2. Облегченный дизайн
-st.markdown("""
-    <style>
-    .stApp { background-color: #0B0E14; color: #E0E0E0; }
-    [data-testid="stMetricValue"] { color: #00FF41 !important; }
-    .stTabs [data-baseweb="tab-list"] { background-color: #161B22; }
-    </style>
-    """, unsafe_allow_html=True)
+# 2. Дизайн (без наворотов, чтобы не вешал рендер)
+st.markdown("<style>.stMetric { background-color: #1a1a1a; padding: 10px; border-radius: 10px; }</style>", unsafe_allow_html=True)
 
-# 3. Функции (вынесены, чтобы не тормозить запуск)
-def get_rate_safe(c):
-    if c == "USD": return 1.0
-    try:
-        r = httpx.get("https://open.er-api.com/v6/latest/USD", timeout=1.5)
-        return r.json()['rates'].get(c, 1.0)
-    except: return 1.0
+st.title("🛰️ ARBITRAGE OS v8.0")
 
-def process_batch_safe(img, count):
-    res = []
-    for _ in range(count):
-        temp = img.rotate(random.uniform(-1.5, 1.5))
-        if random.choice([True, False]): temp = ImageOps.mirror(temp)
-        res.append(temp.filter(ImageFilter.SMOOTH))
-    return res
+# 3. ТАБЫ (Простая структура)
+tab_calc, tab_creo, tab_api = st.tabs(["📊 КАЛЬКУЛЯТОР", "🖼️ КРЕАТИВЫ", "💎 ОФФЕРЫ"])
 
-# 4. Интерфейс
-st.title("🛰️ ARBITRAGE OS v6.1")
+# --- ВКЛАДКА КАЛЬКУЛЯТОРА ---
+with tab_calc:
+    st.header("Расчет прибыли")
+    
+    # Ввод данных в столбик (так надежнее для мобил и десктопа)
+    payout = st.number_input("Выплата ($)", min_value=0.0, value=25.0, step=1.0, key="p1")
+    cr = st.number_input("CR лендинга (%)", min_value=0.0, value=2.0, step=0.1, key="c1")
+    approve = st.number_input("Аппрув (%)", min_value=0.0, value=40.0, step=1.0, key="a1")
+    
+    # Прямой расчет
+    cpc_usd = payout * (cr / 100) * (approve / 100)
+    
+    st.divider()
+    
+    # Вывод результата
+    st.metric(label="МАКСИМАЛЬНЫЙ CPC ($)", value=f"${round(cpc_usd, 3)}")
+    st.metric(label="ДЛЯ ROI 100% ($)", value=f"${round(cpc_usd/2, 3)}")
+    
+    st.info("Это чистый расчет в USD. Если видишь это — калькулятор работает!")
 
-t = st.tabs(["📊 ЭКОНОМИКА", "🖼️ КРЕАТИВЫ", "💎 ОФФЕРЫ", "📝 ТЕКСТЫ"])
-
-# --- ВКЛАДКА 1: ЭКОНОМИКА (Самая важная) ---
-with t[0]:
-    st.subheader("Калькулятор ROI")
-    c1, c2, c3 = st.columns(3)
-    p = c1.number_input("Выплата ($)", value=25.0, key="p")
+# --- ВКЛАДКА КРЕАТИВОВ ---
+with tab_creo:
+    st.header("Уникализатор")
+    file = st.file_uploader("Загрузи картинку", type=['jpg', 'png'])
+    
+    if file:
+        img = Image.open(file)
+        if st.button("СДЕЛАТЬ КОПИЮ"):
+            #
